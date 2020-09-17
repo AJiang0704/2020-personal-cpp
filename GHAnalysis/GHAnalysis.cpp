@@ -64,15 +64,10 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if (!user.empty() && !event.empty() && !repo.empty()) {
-		cout << Num_User_Event_Repo(user, event, repo) << endl;
-	}
-	else if (!user.empty() && !event.empty() && repo.empty()) {
-		cout << Num_User_Event(user, event) << endl;
-	}
-	else if (user.empty() && !event.empty() && !repo.empty()) {
-		cout << Num_Event_Repo(event, repo) << endl;
-	}
+	cout << user << " " << event << " " << repo << endl;
+//	Num_User_Event(user, event);
+//	Num_Event_Repo(event, repo);
+//	Num_User_Event_Repo(user, event, repo);
 
 	return 0;
 }
@@ -105,7 +100,7 @@ void ReadFile(string path) {
 				value1["repo"] = Json::Value(repo_name);
 
 				ofstream os;
-				os.open("Temp_Json.json", std::ios::out | std::ios::app);
+				os.open("../Data/Temp_Json.json", std::ios::out | std::ios::app);
 				if (!os.is_open())
 					cout << "error." << endl;
 				os << sw.write(value1);
@@ -114,6 +109,7 @@ void ReadFile(string path) {
 		}
 	}
 	file.close();
+	cout << "Initialization is complete.";
 }
 
 int Num_User_Event_Repo(string u, string e, string r) {
@@ -121,7 +117,7 @@ int Num_User_Event_Repo(string u, string e, string r) {
 	int ret = 0;
 	Json::Reader reader;
 	Json::Value value;
-	ifstream file("Temp_Json.json", ios::binary);
+	ifstream file("../Data/Temp_Json.json", ios::binary);
 	if (!file.is_open()) {
 		cout << "File open error" << endl;
 		return 0;
@@ -135,6 +131,7 @@ int Num_User_Event_Repo(string u, string e, string r) {
 		}
 	}
 	file.close();
+	cout << ret << endl;
 	return ret;
 }
 
@@ -143,7 +140,7 @@ int Num_User_Event(string u, string e) {
 	int ret = 0;
 	Json::Reader reader;
 	Json::Value value;
-	ifstream file("Temp_Json.json", ios::binary);
+	ifstream file("../Data/Temp_Json.json", ios::binary);
 	if (!file.is_open()) {
 		cout << "File open error" << endl;
 		return 0;
@@ -157,6 +154,7 @@ int Num_User_Event(string u, string e) {
 		}
 	}
 	file.close();
+	cout << ret << endl;
 	return ret;
 }
 
@@ -165,7 +163,7 @@ int Num_Event_Repo(string e, string r) {
 	int ret = 0;
 	Json::Reader reader;
 	Json::Value value;
-	ifstream file("Temp_Json.json", ios::binary);
+	ifstream file("../Data/Temp_Json.json", ios::binary);
 	if (!file.is_open()) {
 		cout << "File open error" << endl;
 		return 0;
@@ -179,5 +177,6 @@ int Num_Event_Repo(string e, string r) {
 		}
 	}
 	file.close();
+	cout << ret << endl;
 	return ret;
 }
