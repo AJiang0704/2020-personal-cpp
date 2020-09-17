@@ -14,25 +14,24 @@
 #define STATIC_GETOPT
 #define _GNU_SOURCE
 #define GH_LOG_INFO
-
 #include <iostream>
 #include <fstream>
-#include <map>
+#include <sstream>
 #include <string.h>
+#include <assert.h>
 #include <getopt.h>
 #include <json/json.h>
-
+#include <map>
 
 using namespace std;
 
-void ReadFile(string path);
-int Num_User_Event_Repo(string u, string e, string r);
-int Num_User_Event(string u, string e);
-int Num_Event_Repo(string e, string r);
+void Init(string path);
+void Num_User_Event(string u, string e);
+void Num_Event_Repo(string e, string r);
+void Num_User_Event_Repo(string u, string e, string r);
 
 int main(int argc, char** argv) {
 	int opt;
-	int result = 0;
 	int digit_optind = 0;
 	int option_index = 0;
 	string user, event, repo;
@@ -50,7 +49,7 @@ int main(int argc, char** argv) {
 	while ((opt = getopt_long(argc, argv, optstring, long_options, &option_index)) != -1) {
 		switch (opt) {
 		case 'i':
-			ReadFile(optarg);
+			Init(optarg);
 			break;
 		case 'u':
 			user = optarg;
@@ -64,29 +63,45 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	cout << user << " " << event << " " << repo << endl;
-//	Num_User_Event(user, event);
-//	Num_Event_Repo(event, repo);
-//	Num_User_Event_Repo(user, event, repo);
+	if (!user.empty() && !event.empty() && !repo.empty()) {
+		Num_User_Event_Repo(user, event, repo);
+	}
+	if (user.empty() && !event.empty() && !repo.empty()) {
+		Num_Event_Repo(event, repo);
+	}
+	if (!user.empty() && !event.empty() && repo.empty()) {
+		Num_User_Event(user, event);
+	}
 
 	return 0;
 }
 
-void ReadFile(string path) {
+void Init(string path) {
+	//cout << "进入初始化." << endl;
+
 	int i;
 	string str;
 	Json::Value value;
 	Json::Value value1;
 	Json::Reader reader;
 	Json::StyledWriter sw;
-	ifstream file(path, ios::in);
+
+	ifstream file(path, ios::binary);
 	if (!file.is_open()) {
-		cout << "File open error" << endl;
+		cout << "Data文件打开失败." << endl;
 		return;
 	}
-	else {
-		i = 0;
-		while (getline(file, str)) {
+	
+	i = 0;
+	ofstream os;
+	os.open("../Data/Temp_Json.json", std::ios::out | std::ios::app);
+	if (!os.is_open()) {
+		cout << "Temp_Json.json文件创建失败." << endl;
+		return;
+	}
+
+	os << "[" << endl;
+	while (getline(file, str)) {
 			i++;
 			//cout << i << endl;
 			if (reader.parse(str, value)) {
@@ -99,84 +114,118 @@ void ReadFile(string path) {
 				value1["event"] = Json::Value(type);
 				value1["repo"] = Json::Value(repo_name);
 
-				ofstream os;
-				os.open("../Data/Temp_Json.json", std::ios::out | std::ios::app);
-				if (!os.is_open())
-					cout << "error." << endl;
 				os << sw.write(value1);
-				os.close();
+				os << "," << endl;
+				
+			}
+			else {
+				cout << "Data文件读取失败." << endl;
+				return;
 			}
 		}
-	}
+	os << "]" << endl;
+	os.close();
 	file.close();
-	cout << "Initialization is complete.";
+	
+	cout << "0" << endl;
+	//cout << "初始化完成." << endl;
+	return;
 }
 
-int Num_User_Event_Repo(string u, string e, string r) {
-	string str;
+void Num_User_Event(string u, string e) {
+	//cout << u << "用户的" << e << "事件数量为:" << endl;
+
 	int ret = 0;
+	string str, user, event;
 	Json::Reader reader;
 	Json::Value value;
-	ifstream file("../Data/Temp_Json.json", ios::binary);
-	if (!file.is_open()) {
-		cout << "File open error" << endl;
-		return 0;
-	}
-	else {
-		while (getline(file, str)) {
-			if (reader.parse(str, value)) {
-				if (u == value["user"].asString() && e == value["event"].asString() && r == value["repo"].asString())
-					ret++;
-			}
+
+	ifstream ifile("../Data/Temp_Json.json");
+	ostringstream buf;
+	char ch;
+	while (buf && ifile.get(ch))
+		buf.put(ch);
+	str = buf.str();
+	//cout << str << endl;
+
+	reader.parse(str, value);
+	int size = value.size();
+	//cout << "size:" << size << endl;
+	for (int i = 0; i < size; ++i) {
+		user = value[i]["user"].asString();
+		event = value[i]["event"].asString();
+		//cout << user << " " << event << " " << repo << endl;
+		if (u == user && e == event) {
+			ret++;
 		}
 	}
-	file.close();
+
 	cout << ret << endl;
-	return ret;
+	return;
 }
 
-int Num_User_Event(string u, string e) {
-	string str;
+void Num_Event_Repo(string e, string r) {
+	//cout << r << "项目的" << e << "事件数量为:" << endl;
+
 	int ret = 0;
+	string str, event, repo;
 	Json::Reader reader;
 	Json::Value value;
-	ifstream file("../Data/Temp_Json.json", ios::binary);
-	if (!file.is_open()) {
-		cout << "File open error" << endl;
-		return 0;
-	}
-	else {
-		while (getline(file, str)) {
-			if (reader.parse(str, value)) {
-				if (u == value["user"].asString() && e == value["event"].asString())
-					ret++;
-			}
+
+	ifstream ifile("../Data/Temp_Json.json");
+	ostringstream buf;
+	char ch;
+	while (buf && ifile.get(ch))
+		buf.put(ch);
+	str = buf.str();
+	//cout << str << endl;
+
+	reader.parse(str, value);
+	int size = value.size();
+	//cout << "size:" << size << endl;
+	for (int i = 0; i < size; ++i) {
+		event = value[i]["event"].asString();
+		repo = value[i]["repo"].asString();
+		//cout << user << " " << event << " " << repo << endl;
+		if (e == event && r == repo) {
+			ret++;
 		}
 	}
-	file.close();
+
 	cout << ret << endl;
-	return ret;
+	return;
 }
 
-int Num_Event_Repo(string e, string r) {
-	string str;
+void Num_User_Event_Repo(string u, string e, string r) {
+	//cout << u << "用户在" << r << "项目的" << e << "事件数量为:" << endl;
+
 	int ret = 0;
+	string str, user, event, repo;
 	Json::Reader reader;
 	Json::Value value;
-	ifstream file("../Data/Temp_Json.json", ios::binary);
-	if (!file.is_open()) {
-		cout << "File open error" << endl;
-		return 0;
-	}
-	else {
-		while (getline(file, str)) {
-			if (reader.parse(str, value)) {
-				if (e == value["event"].asString() && r == value["repo"].asString())
-					ret++;
-			}
+
+	ifstream ifile("../Data/Temp_Json.json");
+	ostringstream buf;
+	char ch;
+	while (buf && ifile.get(ch))
+		buf.put(ch);
+	str = buf.str();
+	//cout << str << endl;
+
+	reader.parse(str, value);
+	int size = value.size();
+	//cout << "size:" << size << endl;
+	for (int i = 0; i < size; ++i) {
+		user = value[i]["user"].asString();
+		event = value[i]["event"].asString();
+		repo = value[i]["repo"].asString();
+		//cout << user << " " << event << " " << repo << endl;
+		if (u == user && e == event && r == repo) {
+			ret++;
 		}
 	}
-	file.close();
+
 	cout << ret << endl;
-	return ret;
+	return;
 }
+
